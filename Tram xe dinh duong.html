@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trạm Xe Buýt Dinh Dưỡng - Ẩm Thực Việt</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white text-emerald-600 p-2 rounded-xl shadow font-bold text-xl">
+                    <i class="fa-solid font-bold fa-bus"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg md:text-xl leading-tight">Trạm Xe Buýt Dinh Dưỡng</h1>
+                    <p class="text-xs text-emerald-100 hidden sm:block">Giáo dục dinh dưỡng & Vận động thể chất Việt Nam</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleModal('healthModal')" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold px-3 py-2 rounded-lg text-sm transition flex items-center space-x-1 shadow">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span class="hidden md:inline">Sức Khỏe, BMI & Tra Cứu</span>
+                    <span class="md:hidden">BMI & Tra Cứu</span>
+                </button>
+                <button onclick="toggleDrawer('aiDrawer')" class="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1 border border-white/30">
+                    <i class="fa-solid fa-robot text-amber-300"></i>
+                    <span>AI Tư Vấn</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-2 sm:px-4 py-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
+
+        <!-- LEFT PANEL: ATHLETE SELECTION & TRACE -->
+        <section class="lg:col-span-4 flex flex-col space-y-4">
+            <!-- PASSENGER QUEUE CARD -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-bold text-slate-700 flex items-center space-x-2">
+                        <i class="fa-solid fa-users text-emerald-600"></i>
+                        <span>Hành Khách Lên Xe</span>
+                    </h2>
+                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold" id="queueCount">3 Hành khách</span>
+                </div>
+
+                <div class="space-y-2.5 max-h-[220px] overflow-y-auto custom-scrollbar pr-1" id="athleteQueue">
+                    <!-- Dynamic Queue Cards -->
+                </div>
+            </div>
+
+            <!-- NUTRITION CONVERTER CARD -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex-1">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-bold text-slate-700 flex items-center space-x-2">
+                        <i class="fa-solid fa-scale-balanced text-amber-500"></i>
+                        <span>Quy Đổi Thực Phẩm Thuần Việt</span>
+                    </h2>
+                </div>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Chọn loại thực phẩm</label>
+                        <select id="convertFoodSelect" onchange="calculateFoodConversion()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <!-- Options generated dynamically -->
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Nhập khối lượng (g hoặc ml)</label>
+                        <input type="number" id="convertWeight" value="100" min="1" oninput="calculateFoodConversion()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+
+                    <div id="conversionResult" class="bg-emerald-50/60 border border-emerald-200 p-3 rounded-xl space-y-1.5 text-xs text-slate-700">
+                        <!-- Conversion results output -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: MAIN GAME BOARD -->
+        <section class="lg:col-span-8 flex flex-col space-y-4">
+            
+            <!-- CURRENT PASSENGER ACTIVE CARD -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div class="flex items-center space-x-3">
+                        <div id="activeAvatar" class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 text-xl font-bold border-2 border-emerald-500 shadow-sm">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h3 id="activeName" class="font-bold text-base md:text-lg text-slate-800">Đang chọn...</h3>
+                                <span id="activeAgeTag" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">--</span>
+                            </div>
+                            <p id="activeSport" class="text-xs text-slate-500">Môn thể thao / Hoạt động: --</p>
+                        </div>
+                    </div>
+
+                    <!-- TIMER & GAME CONTROLS -->
+                    <div class="flex items-center space-x-3 self-end md:self-auto">
+                        <div class="text-right">
+                            <div class="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Thời gian</div>
+                            <div id="timerDisplay" class="text-2xl font-black text-emerald-600 font-mono">60s</div>
+                        </div>
+                        <button id="startBtn" onclick="toggleGameTimer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center space-x-1.5 text-sm">
+                            <i class="fa-solid fa-play"></i>
+                            <span id="startBtnText">Bắt đầu (60s)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TARGET PROGRESS BARS -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-amber-700"><i class="fa-solid fa-bolt mr-1"></i>Kcal</span>
+                            <span id="kcalVal" class="text-slate-600">0 / 0</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="kcalBar" class="bg-amber-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-blue-700"><i class="fa-solid fa-wheat-awn mr-1"></i>Glucid</span>
+                            <span id="glucidVal" class="text-slate-600">0g / 0g</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="glucidBar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-rose-700"><i class="fa-solid fa-drumstick-bite mr-1"></i>Protein</span>
+                            <span id="proteinVal" class="text-slate-600">0g / 0g</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="proteinBar" class="bg-rose-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-cyan-700"><i class="fa-solid fa-bottle-water mr-1"></i>Nước</span>
+                            <span id="waterVal" class="text-slate-600">0ml / 0ml</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                            <div id="waterBar" class="bg-cyan-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRAY & FOOD SELECTION -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex-1 flex flex-col">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-utensils text-emerald-600"></i>
+                        <span>Thực Đơn Món Ăn Thuần Việt</span>
+                    </h3>
+                    <button onclick="clearTray()" class="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center space-x-1">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Làm trống khay</span>
+                    </button>
+                </div>
+
+                <!-- FOOD GRID -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 mb-4 max-h-[260px] overflow-y-auto custom-scrollbar p-1" id="foodGrid">
+                    <!-- Dynamic Food Cards -->
+                </div>
+
+                <!-- SELECTED TRAY ITEMS -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mt-auto">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Khay Phục Vụ Hiện Tại:</span>
+                        <span id="trayCount" class="text-xs text-slate-500">0 món</span>
+                    </div>
+                    <div id="trayItems" class="flex flex-wrap gap-2 min-h-[40px] items-center">
+                        <span class="text-xs text-slate-400 italic">Chưa chọn món ăn nào. Hãy bấm chọn các món ở trên!</span>
+                    </div>
+                </div>
+
+                <!-- SUBMIT SERVE BUTTON -->
+                <button onclick="submitServing()" class="w-full mt-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Hoàn Thành Phục Vụ</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- HEALTH & BMI MODAL -->
+    <div id="healthModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden my-auto">
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-lg flex items-center space-x-2">
+                    <i class="fa-solid fa-heart-pulse text-amber-300"></i>
+                    <span>Công Cụ Tính BMI & Tư Vấn Độ Tuổi</span>
+                </h3>
+                <button onclick="toggleModal('healthModal')" class="text-white/80 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar space-y-4 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Họ và Tên</label>
+                        <input type="text" id="bmiName" value="Hành khách mới" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nhóm Độ Tuổi</label>
+                        <select id="bmiAgeGroup" onchange="onAgeGroupChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="5-11">Nhi đồng (5 - 11 tuổi)</option>
+                            <option value="12-17" selected>Thanh thiếu niên (12 - 17 tuổi)</option>
+                            <option value="18-64">Người trưởng thành (18 - 64 tuổi)</option>
+                            <option value="65+">Người cao tuổi (≥ 65 tuổi)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Chiều cao (cm)</label>
+                        <input type="number" id="bmiHeight" value="155" min="50" max="220" oninput="calculateBMI()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Cân nặng (kg)</label>
+                        <input type="number" id="bmiWeight" value="48" min="10" max="200" oninput="calculateBMI()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Môn Thể Thao / Trạng Thái Mẫu</label>
+                        <select id="bmiSport" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="Trạng thái bình thường">Trạng thái bình thường (Hằng ngày)</option>
+                            <option value="Bóng đá">Bóng đá</option>
+                            <option value="Bơi lội">Bơi lội</option>
+                            <option value="Chạy bộ">Chạy bộ</option>
+                            <option value="Đạp xe">Đạp xe</option>
+                            <option value="Cầu lông">Cầu lông</option>
+                            <option value="Gym">Tập Gym / Thể hình</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- BMI RESULT DISPLAY -->
+                <div id="bmiResultBox" class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2">
+                    <!-- Dynamic BMI output -->
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end space-x-2">
+                <button onclick="toggleModal('healthModal')" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg">Đóng</button>
+                <button onclick="applyBMIToGame()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow">Áp dụng thành VĐV trong game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI CHAT DRAWER -->
+    <div id="aiDrawer" class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="bg-teal-700 text-white p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-robot text-amber-300 text-lg"></i>
+                <h3 class="font-bold text-base">Trợ Lý AI Dinh Dưỡng</h3>
+            </div>
+            <button onclick="toggleDrawer('aiDrawer')" class="text-white/80 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div id="aiChatBox" class="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-3 text-sm bg-slate-50">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-slate-700">
+                Xin chào! Tôi là Trợ Lý AI Dinh Dưỡng. Bạn có câu hỏi nào về chế độ ăn uống cho thể thao hoặc theo độ tuổi không?
+            </div>
+        </div>
+
+        <!-- QUICK PROMPTS -->
+        <div class="p-2 bg-slate-100 border-t border-slate-200 flex gap-1.5 overflow-x-auto text-xs whitespace-nowrap">
+            <button onclick="sendQuickPrompt('Trẻ 5-11 tuổi nên ăn gì trước khi tập bơi?')" class="bg-white border border-slate-300 hover:bg-emerald-50 px-2.5 py-1 rounded-full text-slate-600">Trẻ 5-11t ăn gì trước bơi?</button>
+            <button onclick="sendQuickPrompt('Làm sao để phục hồi cơ bắp sau khi đá bóng?')" class="bg-white border border-slate-300 hover:bg-emerald-50 px-2.5 py-1 rounded-full text-slate-600">Phục hồi sau đá bóng?</button>
+        </div>
+
+        <div class="p-3 bg-white border-t border-slate-200 flex items-center space-x-2">
+            <input type="text" id="aiInput" placeholder="Nhập câu hỏi dinh dưỡng..." onkeypress="if(event.key==='Enter') sendAIMessage()" class="flex-1 bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <button onclick="sendAIMessage()" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 1. VIETNAMESE FOOD DATABASE
+        const foodDatabase = [
+            { id: 'f1', name: 'Nước lọc', kcal: 0, glucid: 0, protein: 0, water: 350, icon: 'fa-glass-water', unit: 'ml' },
+            { id: 'f2', name: 'Nước dừa tươi', kcal: 45, glucid: 9, protein: 1, water: 250, icon: 'fa-coconut', unit: 'ml' },
+            { id: 'f3', name: 'Chuối ngự', kcal: 90, glucid: 22, protein: 1, water: 70, icon: 'fa-bananas', unit: 'trái' },
+            { id: 'f4', name: 'Bánh mì pate', kcal: 310, glucid: 45, protein: 11, water: 50, icon: 'fa-bread-slice', unit: 'ổ' },
+            { id: 'f5', name: 'Khoai lang luộc', kcal: 120, glucid: 27, protein: 2, water: 80, icon: 'fa-potato', unit: 'củ' },
+            { id: 'f6', name: 'Trứng gà luộc', kcal: 78, glucid: 0.6, protein: 6.3, water: 40, icon: 'fa-egg', unit: 'quả' },
+            { id: 'f7', name: 'Phở gà xé', kcal: 380, glucid: 52, protein: 22, water: 300, icon: 'fa-bowl-food', unit: 'bát' },
+            { id: 'f8', name: 'Sữa đậu nành', kcal: 110, glucid: 9, protein: 7, water: 200, icon: 'fa-bottle-droplet', unit: 'hộp' },
+            { id: 'f9', name: 'Cơm tấm chả trứng', kcal: 520, glucid: 68, protein: 24, water: 100, icon: 'fa-plate-wheat', unit: 'dĩa' },
+            { id: 'f10', name: 'Chè đỗ đen', kcal: 180, glucid: 38, protein: 5, water: 150, icon: 'fa-mug-hot', unit: 'cốc' },
+            { id: 'f11', name: 'Nước mía tươi', kcal: 120, glucid: 30, protein: 0, water: 200, icon: 'fa-whiskey-glass', unit: 'ly' },
+            { id: 'f12', name: 'Xôi xéo', kcal: 410, glucid: 62, protein: 9, water: 60, icon: 'fa-bowl-rice', unit: 'gói' }
+        ];
+
+        // 2. SINGLE INGREDIENT CONVERSION DATABASE (100g BASE)
+        const rawIngredients = [
+            { id: 'r1', name: 'Thịt bò tươi', kcal: 250, glucid: 0, protein: 26, water: 65 },
+            { id: 'r2', name: 'Ức gà phi lê', kcal: 165, glucid: 0, protein: 31, water: 68 },
+            { id: 'r3', name: 'Thịt lợn nạc', kcal: 143, glucid: 0, protein: 21, water: 72 },
+            { id: 'r4', name: 'Cá thu', kcal: 189, glucid: 0, protein: 20, water: 73 },
+            { id: 'r5', name: 'Trứng gà', kcal: 155, glucid: 1.1, protein: 13, water: 75 },
+            { id: 'r6', name: 'Khoai lang', kcal: 86, glucid: 20, protein: 1.6, water: 77 },
+            { id: 'r7', name: 'Bánh mì', kcal: 265, glucid: 49, protein: 9, water: 35 },
+            { id: 'r8', name: 'Cơm trắng', kcal: 130, glucid: 28, protein: 2.7, water: 68 },
+            { id: 'r9', name: 'Chuối ngự', kcal: 89, glucid: 23, protein: 1.1, water: 75 },
+            { id: 'r10', name: 'Nước dừa', kcal: 19, glucid: 3.7, protein: 0.7, water: 95 },
+            { id: 'r11', name: 'Sữa đậu nành', kcal: 54, glucid: 6, protein: 3.3, water: 90 },
+            { id: 'r12', name: 'Đậu phụ', kcal: 76, glucid: 1.9, protein: 8, water: 88 },
+            { id: 'r13', name: 'Nước mía', kcal: 60, glucid: 15, protein: 0, water: 85 },
+            { id: 'r14', name: 'Xôi xéo', kcal: 205, glucid: 31, protein: 4.5, water: 60 }
+        ];
+
+        // 3. ATHLETE / PASSENGER QUEUE DATA
+        let queue = [
+            { id: 1, name: 'Nguyễn Văn An', ageGroup: '12-17', sport: 'Bơi lội', target: { kcal: 500, glucid: 65, protein: 20, water: 500 } },
+            { id: 2, name: 'Lê Minh Bảo', ageGroup: '5-11', sport: 'Chạy bộ', target: { kcal: 350, glucid: 45, protein: 12, water: 350 } },
+            { id: 3, name: 'Trần Thị Mai', ageGroup: '18-64', sport: 'Cầu lông', target: { kcal: 450, glucid: 55, protein: 18, water: 450 } }
+        ];
+
+        let activeIndex = 0;
+        let selectedTray = [];
+        let timer = 60;
+        let timerInterval = null;
+
+        // INITIALIZATION
+        window.onload = function() {
+            renderQueue();
+            renderFoodGrid();
+            initConversionSelect();
+            calculateFoodConversion();
+            calculateBMI();
+            selectAthlete(0);
+        };
+
+        // RENDER QUEUE
+        function renderQueue() {
+            const container = document.getElementById('athleteQueue');
+            container.innerHTML = '';
+            document.getElementById('queueCount').innerText = `${queue.length} Hành khách`;
+
+            queue.forEach((item, index) => {
+                const isActive = index === activeIndex;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl cursor-pointer border transition ${isActive ? 'bg-emerald-50 border-emerald-500 shadow-sm' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`;
+                card.onclick = () => selectAthlete(index);
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-sm text-slate-800">${item.name}</span>
+                        <span class="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">${item.ageGroup} tuổi</span>
+                    </div>
+                    <div class="text-xs text-slate-500 mt-0.5">${item.sport}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // SELECT ATHLETE
+        function selectAthlete(index) {
+            activeIndex = index;
+            renderQueue();
+            const athlete = queue[activeIndex];
+            if(!athlete) return;
+
+            document.getElementById('activeName').innerText = athlete.name;
+            document.getElementById('activeAgeTag').innerText = `${athlete.ageGroup} tuổi`;
+            document.getElementById('activeSport').innerText = `Môn thể thao / Hoạt động: ${athlete.sport}`;
+
+            clearTray();
+            updateProgress();
+        }
+
+        // RENDER FOOD GRID
+        function renderFoodGrid() {
+            const grid = document.getElementById('foodGrid');
+            grid.innerHTML = '';
+
+            foodDatabase.forEach(food => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 p-2.5 rounded-xl cursor-pointer transition flex flex-col justify-between";
+                card.onclick = () => addFoodToTray(food);
+                card.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid ${food.icon} text-emerald-600 text-base"></i>
+                        <span class="font-semibold text-xs text-slate-800 leading-tight">${food.name}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 mt-2">
+                        <span class="text-amber-600 font-medium">${food.kcal} kcal</span> | ${food.water}ml
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // TRAY MANAGEMENT
+        function addFoodToTray(food) {
+            selectedTray.push(food);
+            renderTray();
+            updateProgress();
+        }
+
+        function clearTray() {
+            selectedTray = [];
+            renderTray();
+            updateProgress();
+        }
+
+        function renderTray() {
+            const container = document.getElementById('trayItems');
+            document.getElementById('trayCount').innerText = `${selectedTray.length} món`;
+
+            if(selectedTray.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-400 italic">Chưa chọn món ăn nào. Hãy bấm chọn các món ở trên!</span>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            selectedTray.forEach((item, i) => {
+                const tag = document.createElement('span');
+                tag.className = "inline-flex items-center bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-lg font-medium space-x-1";
+                tag.innerHTML = `
+                    <span>${item.name}</span>
+                    <button onclick="removeTrayItem(${i})" class="text-emerald-600 hover:text-rose-600 ml-1"><i class="fa-solid fa-circle-xmark"></i></button>
+                `;
+                container.appendChild(tag);
+            });
+        }
+
+        function removeTrayItem(index) {
+            selectedTray.splice(index, 1);
+            renderTray();
+            updateProgress();
+        }
+
+        // PROGRESS CALCULATIONS
+        function updateProgress() {
+            const athlete = queue[activeIndex];
+            if(!athlete) return;
+
+            const totals = selectedTray.reduce((acc, curr) => ({
+                kcal: acc.kcal + curr.kcal,
+                glucid: acc.glucid + curr.glucid,
+                protein: acc.protein + curr.protein,
+                water: acc.water + curr.water
+            }), { kcal: 0, glucid: 0, protein: 0, water: 0 });
+
+            // Kcal
+            document.getElementById('kcalVal').innerText = `${totals.kcal} / ${athlete.target.kcal}`;
+            document.getElementById('kcalBar').style.width = `${Math.min(100, (totals.kcal / athlete.target.kcal) * 100)}%`;
+
+            // Glucid
+            document.getElementById('glucidVal').innerText = `${totals.glucid.toFixed(1)}g / ${athlete.target.glucid}g`;
+            document.getElementById('glucidBar').style.width = `${Math.min(100, (totals.glucid / athlete.target.glucid) * 100)}%`;
+
+            // Protein
+            document.getElementById('proteinVal').innerText = `${totals.protein.toFixed(1)}g / ${athlete.target.protein}g`;
+            document.getElementById('proteinBar').style.width = `${Math.min(100, (totals.protein / athlete.target.protein) * 100)}%`;
+
+            // Water
+            document.getElementById('waterVal').innerText = `${totals.water}ml / ${athlete.target.water}ml`;
+            document.getElementById('waterBar').style.width = `${Math.min(100, (totals.water / athlete.target.water) * 100)}%`;
+        }
+
+        // TIMER LOGIC
+        function toggleGameTimer() {
+            if(timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                document.getElementById('startBtnText').innerText = "Tiếp tục (60s)";
+                return;
+            }
+
+            timer = 60;
+            document.getElementById('startBtnText').innerText = "Đang chạy...";
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timerDisplay').innerText = `${timer}s`;
+                if(timer <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    alert("Hết thời gian 60 giây phục vụ!");
+                    document.getElementById('startBtnText').innerText = "Bắt đầu (60s)";
+                }
+            }, 1000);
+        }
+
+        function submitServing() {
+            if(selectedTray.length === 0) {
+                alert("Vui lòng chọn ít nhất một món ăn trước khi hoàn thành!");
+                return;
+            }
+            alert(`Đã hoàn thành phục vụ cho ${queue[activeIndex].name}! Xe buýt chuẩn bị khởi hành.`);
+            if(timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            timer = 60;
+            document.getElementById('timerDisplay').innerText = "60s";
+            document.getElementById('startBtnText').innerText = "Bắt đầu (60s)";
+        }
+
+        // CONVERSION TOOL
+        function initConversionSelect() {
+            const select = document.getElementById('convertFoodSelect');
+            select.innerHTML = '';
+            rawIngredients.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.innerText = item.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function calculateFoodConversion() {
+            const selectedId = document.getElementById('convertFoodSelect').value;
+            const weight = parseFloat(document.getElementById('convertWeight').value) || 0;
+            const item = rawIngredients.find(r => r.id === selectedId) || rawIngredients[0];
+
+            const ratio = weight / 100;
+            const resKcal = (item.kcal * ratio).toFixed(1);
+            const resGlucid = (item.glucid * ratio).toFixed(1);
+            const resProtein = (item.protein * ratio).toFixed(1);
+            const resWater = (item.water * ratio).toFixed(1);
+
+            document.getElementById('conversionResult').innerHTML = `
+                <div class="font-bold text-slate-800 text-xs">${weight}g/ml ${item.name} chứa:</div>
+                <div class="grid grid-cols-2 gap-1 text-slate-600">
+                    <div>• Calo: <strong class="text-amber-600">${resKcal} kcal</strong></div>
+                    <div>• Glucid: <strong>${resGlucid} g</strong></div>
+                    <div>• Protein: <strong>${resProtein} g</strong></div>
+                    <div>• Lượng nước: <strong>${resWater} ml</strong></div>
+                </div>
+            `;
+        }
+
+        // HEALTH & BMI TOOL
+        function onAgeGroupChange() {
+            const group = document.getElementById('bmiAgeGroup').value;
+            if(group === '5-11') {
+                document.getElementById('bmiHeight').value = 130;
+                document.getElementById('bmiWeight').value = 28;
+            } else if(group === '12-17') {
+                document.getElementById('bmiHeight').value = 155;
+                document.getElementById('bmiWeight').value = 48;
+            } else {
+                document.getElementById('bmiHeight').value = 165;
+                document.getElementById('bmiWeight').value = 60;
+            }
+            calculateBMI();
+        }
+
+        function calculateBMI() {
+            const h = parseFloat(document.getElementById('bmiHeight').value) / 100;
+            const w = parseFloat(document.getElementById('bmiWeight').value);
+            const ageGroup = document.getElementById('bmiAgeGroup').value;
+
+            if(!h || !w || h <= 0 || w <= 0) return;
+
+            const bmi = (w / (h * h)).toFixed(1);
+            let state = "";
+            let color = "";
+            let dietAdvice = "";
+            let exerciseAdvice = "";
+
+            if(bmi < 18.5) {
+                state = "Thiếu cân";
+                color = "text-amber-600";
+                dietAdvice = "Bổ sung các món ăn giàu đạm & năng lượng lành mạnh như Phở gà, Trứng gà, Sữa đậu nành, Xôi xéo.";
+                exerciseAdvice = "Tập thể thao vừa sức 30-45 phút/ngày (Bơi lội, Nhảy dây, Đạp xe) để kích thích thèm ăn và tăng mật độ xương.";
+            } else if(bmi >= 18.5 && bmi < 23) {
+                state = "Bình thường (Khỏe mạnh)";
+                color = "text-emerald-600";
+                dietAdvice = "Duy trì chế độ ăn cân đối 55% Glucid, 20% Protein, bổ sung Chuối ngự & Nước dừa tươi hàng ngày.";
+                exerciseAdvice = "Duy trì ít nhất 60 phút vận động thể thao mỗi ngày (Bóng đá, Cầu lông, Bơi lội) để phát triển thể chất toàn diện.";
+            } else if(bmi >= 23 && bmi < 25) {
+                state = "Tiền béo phì";
+                color = "text-orange-600";
+                dietAdvice = "Giảm bớt đồ ngọt và tinh bột đậm đặc (chè đỗ đen, xôi), tăng cường khoai lang luộc, rau xanh và nước lọc.";
+                exerciseAdvice = "Tăng cường bài tập Cardio tiêu hao Calo (Chạy bộ, Đạp xe, Bơi lội) từ 45-60 phút mỗi ngày.";
+            } else {
+                state = "Béo phì";
+                color = "text-rose-600";
+                dietAdvice = "Hạn chế chất béo động vật, cắt giảm thức ăn nhanh. Ưu tiên ức gà, khoai lang, nước lọc và trái cây ít đường.";
+                exerciseAdvice = "Vận động nhẹ nhàng đến trung bình ít nhất 60 phút/ngày, tránh ngồi một chỗ quá 45 phút.";
+            }
+
+            document.getElementById('bmiResultBox').innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-slate-700">Chỉ số BMI: <strong class="text-base">${bmi}</strong></span>
+                    <span class="font-bold ${color} bg-white px-2.5 py-1 rounded-lg border text-xs">${state}</span>
+                </div>
+                <div class="text-xs space-y-1 text-slate-600 mt-2">
+                    <p><strong>Dinh dưỡng khuyến nghị (${ageGroup} tuổi):</strong> ${dietAdvice}</p>
+                    <p><strong>Chế độ tập luyện:</strong> ${exerciseAdvice}</p>
+                </div>
+            `;
+        }
+
+        function applyBMIToGame() {
+            const name = document.getElementById('bmiName').value || "Hành khách mới";
+            const ageGroup = document.getElementById('bmiAgeGroup').value;
+            const sport = document.getElementById('bmiSport').value;
+
+            let target = { kcal: 450, glucid: 55, protein: 18, water: 450 };
+            if(ageGroup === '5-11') {
+                target = { kcal: 320, glucid: 40, protein: 12, water: 300 };
+            }
+
+            queue.push({ id: Date.now(), name, ageGroup, sport, target });
+            renderQueue();
+            toggleModal('healthModal');
+            selectAthlete(queue.length - 1);
+            alert(`Đã thêm ${name} vào danh sách hành khách chờ lên xe!`);
+        }
+
+        // MODAL & DRAWER TOGGLES
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        function toggleDrawer(id) {
+            document.getElementById(id).classList.toggle('translate-x-full');
+        }
+
+        // AI CHAT
+        function sendAIMessage() {
+            const input = document.getElementById('aiInput');
+            const text = input.value.trim();
+            if(!text) return;
+
+            appendChatMessage('user', text);
+            input.value = '';
+
+            setTimeout(() => {
+                let reply = "Dinh dưỡng hợp lý kết hợp với tập luyện thể thao đều đặn là chìa khóa để duy trì thể trạng tối ưu!";
+                if(text.toLowerCase().includes('bơi')) {
+                    reply = "Trước khi bơi, nên dùng thực phẩm dễ tiêu hóa giàu Carbohydrate như Chuối ngự hoặc Khoai lang luộc trước 30-45 phút.";
+                } else if(text.toLowerCase().includes('đá bóng') || text.toLowerCase().includes('bóng đá')) {
+                    reply = "Sau khi đá bóng, hãy bù đắp Nước dừa tươi hoặc Nước lọc cùng Protein từ Trứng gà / Phở gà trong vòng 30 phút để phục hồi cơ bắp.";
+                }
+                appendChatMessage('ai', reply);
+            }, 600);
+        }
+
+        function sendQuickPrompt(text) {
+            document.getElementById('aiInput').value = text;
+            sendAIMessage();
+        }
+
+        function appendChatMessage(sender, message) {
+            const chatBox = document.getElementById('aiChatBox');
+            const msgDiv = document.createElement('div');
+            if(sender === 'user') {
+                msgDiv.className = "bg-teal-600 text-white p-3 rounded-xl ml-auto max-w-[85%] shadow-sm text-xs";
+            } else {
+                msgDiv.className = "bg-white p-3 rounded-xl border border-slate-200 text-slate-700 mr-auto max-w-[85%] shadow-sm text-xs";
+            }
+            msgDiv.innerText = message;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
